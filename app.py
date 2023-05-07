@@ -12,7 +12,7 @@ import time
 import requests
 
 
-os.environ["OPENAI_API_KEY"] = "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"
+os.environ["OPENAI_API_KEY"] = "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"
 
 def get_video_id(url):
     return re.findall(r'watch\?v=([\w-]+)', url)[0]
