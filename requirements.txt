@@ -7,3 +7,4 @@ requests==2.30.0
 openai
 chromadb
 tiktoken
+os-sys
