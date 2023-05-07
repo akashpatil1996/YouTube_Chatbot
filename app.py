@@ -2,17 +2,16 @@ from youtube_transcript_api import YouTubeTranscriptApi
 from punctuators.models import PunctCapSegModelONNX
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.embeddings import OpenAIEmbeddings
-from langchain.chains.question_answering import load_qa_chain
 from langchain.llms import OpenAI
-from langchain.vectorstores import FAISS
+from langchain.chains import RetrievalQA
+from langchain.vectorstores import Chroma
 import streamlit as st
 import re
-import os
 import time
 import requests
+import os
 
-
-os.environ["OPENAI_API_KEY"] = "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"
+os.environ["OPENAI_API_KEY"] = st.secrets["openai_api"]
 
 def get_video_id(url):
     return re.findall(r'watch\?v=([\w-]+)', url)[0]
@@ -82,22 +81,24 @@ query = st.text_input("Ask your question", placeholder="Question")
 # Create button to ask question and retrieve answer
 if st.button("Ask"):
     # try:
-        text_splitter = CharacterTextSplitter(separator="\n", chunk_size=1000, chunk_overlap=100, )
+        text_splitter = CharacterTextSplitter(separator="\n", chunk_size=1000, chunk_overlap=100)
         transcript = get_transcript(url)
         texts = text_splitter.split_text(transcript)
         embeddings = OpenAIEmbeddings()
-        docsearch = FAISS.from_texts(texts, embeddings)
-        chain = load_qa_chain(OpenAI(), chain_type="stuff")
-        docs = docsearch.similarity_search(query)
-        result = chain.run(input_documents=docs, question=query)
+        db = Chroma.from_texts(texts, embeddings)
+        retriever = db.as_retriever(search_type="similarity", search_kwargs={"k": 2})
+        qa = RetrievalQA.from_chain_type(llm=OpenAI(), chain_type="map_reduce", retriever=retriever, return_source_documents=True)
+        result = qa({"query": query})
+
         progress_text = "Processing..."
         my_bar = st.progress(0, text=progress_text)
         for percent_complete in range(100):
             time.sleep(0.002)
             my_bar.progress(percent_complete + 1, text=progress_text)
-            # Remove progress bar
+
+        # Remove progress bar
         my_bar.empty()
-        st.success(result)
+        st.success(result['result'])
     # except:
         # st.error('There was some error')
 
