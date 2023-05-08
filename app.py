@@ -80,7 +80,7 @@ query = st.text_input("Ask your question", placeholder="Question")
 
 # Create button to ask question and retrieve answer
 if st.button("Ask"):
-    # try:
+    try:
         text_splitter = CharacterTextSplitter(separator="\n", chunk_size=1000, chunk_overlap=100)
         transcript = get_transcript(url)
         texts = text_splitter.split_text(transcript)
@@ -99,6 +99,6 @@ if st.button("Ask"):
         # Remove progress bar
         my_bar.empty()
         st.success(result['result'])
-    # except:
-        # st.error('There was some error')
+    except:
+        st.error('No response. Try again!')
 
